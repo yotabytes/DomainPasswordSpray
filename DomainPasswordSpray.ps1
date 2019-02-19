@@ -385,6 +385,14 @@ function Get-DomainUserList
     if ($SmallestLockoutThreshold -eq "0")
     {
         Write-Host -ForegroundColor "Yellow" "[*] There appears to be no lockout policy."
+        if ($AccountLockoutThresholds.length -gt 1) {
+            Write-Host -ForegroundColor "Yellow" "[*] However, fine grained policies exist. Setting lockout to the lowest lockout found to be safe."
+            [int]$SmallestLockoutThreshold = $AccountLockoutThresholds | sort | Select -skip 1 -First 1
+        } else {
+            [int]$SmallestLockoutThreshold = 9999999
+            Write-Host -ForegroundColor "Yellow" "[*] No fine grained policies exist. Setting lockout to a very high number:" $SmallestLockoutThreshold
+ 
+        }
     }
     else
     {
@@ -458,6 +466,8 @@ function Get-DomainUserList
                 if (($timedifference -gt $observation_window) -or ($attemptsuntillockout -gt 1))
                                 {
                     $UserListArray += $samaccountname
+                } else {
+                write-host $samaccountname "has too few attempts left:" $userbadcount "attempt used and treshold is" $SmallestLockoutThreshold
                 }
             }
         }
@@ -543,4 +553,3 @@ function Get-ObservationWindow()
     [int]$observation_window = [convert]::ToInt32($observation_window_no_spaces, 10)
     return $observation_window
 }
-
